@@ -474,15 +474,15 @@ class PandasData(ModelData):
 
     @classmethod
     def _drop_nans(cls, x, nan_mask):
-        if hasattr(x, 'ix'):
-            return x.ix[nan_mask]
+        if hasattr(x, 'loc'):
+            return x.loc[nan_mask]
         else:  # extra arguments could be plain ndarrays
             return super(PandasData, cls)._drop_nans(x, nan_mask)
 
     @classmethod
     def _drop_nans_2d(cls, x, nan_mask):
-        if hasattr(x, 'ix'):
-            return x.ix[nan_mask].ix[:, nan_mask]
+        if hasattr(x, 'loc'):
+            return x.loc[nan_mask].loc[:, nan_mask]
         else:  # extra arguments could be plain ndarrays
             return super(PandasData, cls)._drop_nans_2d(x, nan_mask)
 
