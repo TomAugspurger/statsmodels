@@ -17,6 +17,7 @@ env:
     - OPTIONAL=
     - COVERAGE=false
     - USEMPL=true
+    - secure: "SB2jY9Hcv7/axPPIAbt9vdWFRzdm9IxkrwM08vRf9DU7gSlTN415NYA6W2EXPuGKPYFAbID50USg+N41NraIppkAvwbr3s5Wjqc5sEplyvoHxZ22lgKuqdk55+Qc2mteXXkY1e7NQeflAWDeeGs3tkr14qcekW7JvP4fUimtCuA="
 
 matrix:
   fast_finish: true
@@ -69,6 +70,15 @@ matrix:
     - SCIPY=
     - PANDAS=
     - MATPLOTLIB=1.4
+  - python: 2.7
+    env:
+    - PYTHON=3.5
+    - python-dateutil=
+    - NUMPY=
+    - SCIPY=
+    - PANDAS=
+    - MATPLOTLIB=1.5
+    - DOCS="true"
 
 notifications:
   email:
@@ -112,12 +122,22 @@ install:
 script:
   - SRCDIR=$PWD
   - python setup.py install
-  - mkdir -p "${SRCDIR}/travis-test"; cd "${SRCDIR}/travis-test"
   # Show versions
   - python -c 'import statsmodels.api as sm; sm.show_versions();'
   # Compose a script to run testing with coverage
-  - echo 'import statsmodels as sm; a=sm.test(label="full", verbose=3); import sys; sys.exit((len(a.failures)+len(a.errors))>0)' > test.py
-  - if [ ${COVERAGE} = true ]; then coverage run --rcfile=${SRCDIR}/.travis_coveragerc test.py; else python test.py; fi
+  - if [[ "${DOCS}" == "true" ]]; then
+      set -e;
+      set -x;
+      conda install -c conda-forge doctr sphinx nbconvert nbformat notebook pandas ipykernel numpydoc --yes;
+      cd docs;
+      make html;
+      cd ..;
+      doctr deploy --deploy-repo TomAugspurger/statsmodels;
+    else
+      mkdir -p "${SRCDIR}/travis-test"; cd "${SRCDIR}/travis-test";
+      echo 'import statsmodels as sm; a=sm.test(label="full", verbose=3); import sys; sys.exit((len(a.failures)+len(a.errors))>0)' > test.py;
+      if [ ${COVERAGE} = true ]; then coverage run --rcfile=${SRCDIR}/.travis_coveragerc test.py; else python test.py; fi
+    fi
 
 after_success:
   # Coverage only for 2.7
