@@ -223,6 +223,15 @@ class Optimizer(object):
         # 3) setup for openopt
         pass
 
+
+class DaskOptimizer(Optimizer):
+
+    def _fit(f, score, start_params, fargs, kwargs, hessian,
+             method, disp, maxiter, callback, retall, full_output):
+        from dask_glm.algorithms import admm
+        return admm(self.exog, self.endog)
+
+
 ########################################
 # Helper functions to fit
 

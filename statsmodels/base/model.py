@@ -73,7 +73,7 @@ class Model(object):
         self._init_keys = list(kwargs.keys())
         if hasconst is not None:
             self._init_keys.append('hasconst')
-
+        self._optimizer = Optimizer
 
     def _get_init_kwds(self):
         """return dictionary with extra keys used in model.__init__
@@ -250,6 +250,9 @@ class LikelihoodModel(Model):
         The Hessian matrix of the model
         """
         raise NotImplementedError
+
+    def _get_optimizer(self):
+        return self._optimizer or Optimizer
 
     def fit(self, start_params=None, method='newton', maxiter=100,
             full_output=True, disp=True, fargs=(), callback=None, retall=False,
@@ -447,7 +450,9 @@ class LikelihoodModel(Model):
             #TODO: why are score and hess positive?
 
         warn_convergence = kwargs.pop('warn_convergence', True)
-        optimizer = Optimizer()
+        # This section is a bit awkward. From statsmodels POV, dask-glm would
+        # provide an optimizer f: llf, score -> opt
+        optimizer = self._get_optimizer()()
         xopt, retvals, optim_settings = optimizer._fit(f, score, start_params,
                                                        fargs, kwargs,
                                                        hessian=hess,
@@ -629,6 +634,7 @@ class GenericLikelihoodModel(LikelihoodModel):
         -------
         paramsfull : array
             expanded parameter array where fixed parameters are included
+
 
         Notes
         -----
