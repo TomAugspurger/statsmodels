@@ -102,6 +102,14 @@ def _is_using_pandas(endog, exog):
     return (isinstance(endog, klasses) or isinstance(exog, klasses))
 
 
+def _is_using_dask(endog, exog):
+    try:
+        import dask.array as da
+        return isinstance(endog, da.Array) or isinstance(exog, da.Array)
+    except ImportError:
+        return False
+
+
 def _is_array_like(endog, exog):
     try:  # do it like this in case of mixed types, ie., ndarray and list
         endog = np.asarray(endog)

@@ -567,6 +567,29 @@ class PandasData(ModelData):
         else:
             return DataFrame(result, columns=self.ynames)
 
+
+
+class DaskArrayData(ModelData):
+
+    def _convert_endog_exog(self, endog, exog):
+        return endog, exog
+
+    def _handle_constant(self, hasconst):
+        if hasconst is not None:
+            if hasconst:
+                self.k_constant = 1
+                self.const_idx = None
+            else:
+                self.k_constant = 0
+                self.const_idx = None
+        elif self.exog is None:
+            self.const_idx = None
+            self.k_constant = 0
+        else:
+            self.k_constant = 0
+            self.const_idx = None
+
+
 def _make_endog_names(endog):
     if endog.ndim == 1 or endog.shape[1] == 1:
         ynames = ['y']
@@ -609,6 +632,8 @@ def handle_data_class_factory(endog, exog):
         klass = PandasData
     elif data_util._is_using_patsy(endog, exog):
         klass = PatsyData
+    elif data_util._is_using_dask(endog, exog):
+        klass = DaskArrayData
     # keep this check last
     elif data_util._is_using_ndarray(endog, exog):
         klass = ModelData
