@@ -24,6 +24,7 @@ from . import families
 from statsmodels.tools.decorators import cache_readonly, resettable_cache
 
 import statsmodels.base.model as base
+from statsmodels.base.optimizer import DaskOptimizer
 import statsmodels.regression.linear_model as lm
 import statsmodels.base.wrapper as wrap
 import statsmodels.regression._tools as reg_tools
@@ -900,6 +901,8 @@ class GLM(base.LikelihoodModel):
         """
         self.scaletype = scale
 
+        if method == 'admm':
+            return self._fit_admm(max_iter=maxiter, abstol=tol)
         if method.lower() == "irls":
             return self._fit_irls(start_params=start_params, maxiter=maxiter,
                                   tol=tol, scale=scale, cov_type=cov_type,
@@ -915,6 +918,13 @@ class GLM(base.LikelihoodModel):
                                       max_start_irls=max_start_irls,
                                       **kwargs)
 
+    def _fit_admm(self, max_iter, abstol):
+        """
+        """
+        from dask_glm.algorithms import admm
+        params = admm(self.exog, self.endog, max_iter=max_iter, abstol=abstol)
+        return params
+
     def _fit_gradient(self, start_params=None, method="newton",
                       maxiter=100, tol=1e-8, full_output=True,
                       disp=True, scale=None, cov_type='nonrobust',
@@ -924,7 +934,6 @@ class GLM(base.LikelihoodModel):
         Fits a generalized linear model for a given family iteratively
         using the scipy gradient optimizers.
         """
-
         if (max_start_irls > 0) and (start_params is None):
             irls_rslt = self._fit_irls(start_params=start_params, maxiter=max_start_irls,
                                        tol=tol, scale=scale, cov_type=cov_type,
@@ -1163,6 +1172,34 @@ class GLM(base.LikelihoodModel):
         return res
 
 
+
+class DaskGLM(GLM):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from dask_glm.families import Logistic
+        self.family = Logistic
+
+    _optimizer = DaskOptimizer
+
+    def fit(self):
+        from dask_glm.algorithms import admm
+        xopt = admm(self.exog, self.endog)
+        mlefit = base.LikelihoodModelResults(self, xopt, None, scale=1.)
+        return mlefit
+
+    def loglike(self, params):
+        lin_pred = self.exog.dot(params)
+        return self.family.loglike(lin_pred, self.endog)
+
+
+    def score_obs(self, params):
+        pass
+
+    def score(self, params):
+        return self._family.gradient(params, self.exog, self.endog)
+
+ 
 class GLMResults(base.LikelihoodModelResults):
     """
     Class to contain GLM results.
