@@ -42,7 +42,7 @@ matrix:
     - NUMPY=1.9
     - SCIPY=0.14
     - MATPLOTLIB=1.4
-    - PANDAS=0.14
+    - PANDAS=0.20rc1
   - python: 2.7
     env:
     - PYTHON=3.4
@@ -94,7 +94,7 @@ before_install:
 
 # Install packages
 install:
-  - conda create --yes --quiet -n statsmodels-test ${PKGS} ${OPTIONAL} nose pip pyyaml setuptools
+  - conda create --yes --quiet -n statsmodels-test -c pandas ${PKGS} ${OPTIONAL} nose pip pyyaml setuptools
   - source activate statsmodels-test
   - if [ ${COVERAGE} = true ]; then pip install coverage coveralls; fi
   - python setup.py install
