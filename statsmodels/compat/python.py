@@ -23,7 +23,7 @@ if PY3:
     from urllib.request import HTTPError, urlretrieve, URLError
     import io
     bytes = bytes
-    str = str
+    unicode = str = str
     asunicode = lambda x, _ : str(x)
 
     def asbytes(s):
@@ -263,3 +263,8 @@ except:
             yield tuple(pool[i] for i in indices)
 
 
+def encode_field_names(descr):
+    if not PY3:
+        return [(n.encode('utf-8') if isinstance(n, unicode) else n, t)
+                for n, t in descr]
+    return descr

@@ -1,4 +1,5 @@
-from statsmodels.compat.python import range, lrange, lzip, long
+from statsmodels.compat.python import (
+    range, lrange, lzip, long, encode_field_names)
 from statsmodels.compat.numpy import recarray_select
 
 import numpy as np
@@ -118,6 +119,7 @@ def add_trend(x, trend="c", prepend=False, has_constant='skip'):
         new_descr = x.dtype.descr
         extra_col = len(new_descr) - len(descr)
         descr = new_descr[:extra_col] + descr if prepend else descr + new_descr[-extra_col:]
+        descr = encode_field_names(descr)
         x = x.astype(np.dtype(descr))
 
     return x
